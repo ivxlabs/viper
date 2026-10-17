@@ -1,0 +1,10 @@
+{
+  "id": "viper",
+  "name": "Viper",
+  "version": "0.1.0",
+  "description": "Writes up the visual changes between two artifacts: what changed where, file by file and function by function.",
+  "license": "GPL-3.0-only",
+  "homepage": "https://ivx.run/docs/difflicit/engines/",
+  "command": ["bin/viper"],
+  "protocol": 1
+}
