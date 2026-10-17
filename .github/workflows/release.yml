@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: MIT
+name: Release
+
+# Pushing a vX.Y.Z tag builds the engine for each platform into a *draft* release. Publishing the draft is what makes
+# it public, and what updates the Homebrew tap (homebrew.yml).
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: An existing tag to build
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+  CARGO_TERM_COLOR: always
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - name: Check the tag matches the version
+        run: |
+          set -eu
+          version=${TAG#v}
+          grep -q "^version = \"$version\"" Cargo.toml || { echo "::error::Cargo.toml isn't at $version"; exit 1; }
+          grep -q "\"version\": \"$version\"" about.json || { echo "::error::about.json isn't at $version"; exit 1; }
+      - name: Create the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 && exit 0
+          name=$(sed -n 's/"name": "\(.*\)",/\1/p' about.json | head -n 1 | tr -d ' ')
+          gh release create "$TAG" --draft --title "$name $TAG" --notes "Download the archive for your platform; it holds a single program."
+
+  build:
+    needs: draft
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-latest, name: macos-universal }
+          - { os: ubuntu-latest, name: linux-x86_64, target: x86_64-unknown-linux-gnu }
+          - { os: windows-latest, name: windows-x86_64, target: x86_64-pc-windows-msvc }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        shell: bash
+        run: |
+          set -eu
+          name=$(sed -n 's/^name = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
+          mkdir -p pkg dist
+          cp README.md LICENSE pkg/
+          if [ "${{ matrix.name }}" = macos-universal ]; then
+            rustup target add aarch64-apple-darwin x86_64-apple-darwin
+            cargo build --release --target aarch64-apple-darwin
+            cargo build --release --target x86_64-apple-darwin
+            lipo -create -output "pkg/$name" "target/aarch64-apple-darwin/release/$name" "target/x86_64-apple-darwin/release/$name"
+          else
+            cargo build --release --target ${{ matrix.target }}
+            cp "target/${{ matrix.target }}/release/$name"* pkg/
+            rm -f pkg/*.d pkg/*.pdb
+          fi
+          tar -czf "dist/$name-$TAG-${{ matrix.name }}.tar.gz" -C pkg .
+      - name: Upload
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" dist/* --clobber

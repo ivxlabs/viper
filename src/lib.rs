@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 //! Viper, an analysis engine for Difflicit: it writes up the visual changes between two artifacts — what changed,
-//! and where, file by file and function by function — as diffmd. Difflicit runs it with one JSON request on stdin
-//! and reads the analysis from stdout (protocol: https://ivx.run/docs/difflicit/engines/).
+//! and where, file by file and function by function — as diffmd. It's a command-line tool: used on its own, it
+//! compares two files or folders itself (compare.rs); Difflicit runs it with one JSON request on stdin and reads
+//! the analysis from stdout (protocol: https://ivx.run/docs/difflicit/engines/). Either way, `analyze` writes it.
 
+pub mod compare;
 pub mod diff;
 
 use serde_json::Value;
 
-/// The engine's own description; its name and version head every analysis.
-const MANIFEST: &str = include_str!("../engine.json");
+/// What this engine is (`--about`); its name and version sign every analysis.
+pub const ABOUT: &str = include_str!("../about.json");
 
 /// The request format this engine speaks.
 pub const PROTOCOL: u64 = 1;
@@ -19,9 +21,9 @@ const MAX_LINES: usize = 300;
 /// Functions listed per table for binaries.
 const MAX_FUNCTIONS: usize = 100;
 
-/// This engine's name and version, from engine.json.
+/// This engine's name and version, from about.json.
 pub fn identity() -> (String, String) {
-    let m: Value = serde_json::from_str(MANIFEST).expect("engine.json is valid JSON");
+    let m: Value = serde_json::from_str(ABOUT).expect("about.json is valid JSON");
     let field = |k: &str| m.get(k).and_then(Value::as_str).unwrap_or_default().to_string();
     (field("name"), field("version"))
 }
@@ -38,10 +40,14 @@ pub fn analyze(req: &Value) -> Result<String, String> {
         Ok::<_, String>((field("artifact"), field("version")))
     };
     let ((before_artifact, before), (after_artifact, after)) = (side("before")?, side("after")?);
-    let title = if before_artifact == after_artifact {
-        format!("{after_artifact}: {before} → {after}")
+    // "lib: 1.0 → 1.1"; two different things, "a.c → b.c"; a patch on its own, just its name.
+    let label = |artifact: &str, version: &str| if version.is_empty() { artifact.to_string() } else { format!("{artifact} {version}") };
+    let title = if before_artifact != after_artifact {
+        format!("{} → {}", label(&before_artifact, &before), label(&after_artifact, &after))
+    } else if before.is_empty() || after.is_empty() {
+        after_artifact
     } else {
-        format!("{before_artifact} {before} → {after_artifact} {after}")
+        format!("{after_artifact}: {before} → {after}")
     };
 
     let (name, version) = identity();
@@ -229,13 +235,23 @@ mod tests {
     }
 
     #[test]
-    fn manifest_matches_the_crate() {
-        // engine.json describes this crate: same id, same version, and the binary scripts/package.sh puts in bin/.
-        let m: Value = serde_json::from_str(MANIFEST).unwrap();
+    fn about_matches_the_crate() {
+        let about: Value = serde_json::from_str(ABOUT).unwrap();
         let (name, version) = identity();
         assert!(!name.is_empty());
-        assert_eq!(m["id"], env!("CARGO_PKG_NAME"), "engine.json's id and Cargo.toml's name differ");
-        assert_eq!(version, env!("CARGO_PKG_VERSION"), "engine.json and Cargo.toml disagree on the version");
-        assert_eq!(m["command"], serde_json::json!([format!("bin/{}", env!("CARGO_PKG_NAME"))]));
+        assert_eq!(version, env!("CARGO_PKG_VERSION"), "about.json and Cargo.toml disagree on the version");
+        assert_eq!(about["protocol"], PROTOCOL);
+    }
+
+    #[test]
+    fn titles() {
+        let title = |b: Value, a: Value| {
+            let mut req = request(json!({ "kind": "unified", "text": "" }));
+            req["before"] = b;
+            req["after"] = a;
+            analyze(&req).unwrap().lines().next().unwrap().to_string()
+        };
+        assert_eq!(title(json!({"artifact": "a.c"}), json!({"artifact": "b.c"})), "# a.c → b.c");
+        assert_eq!(title(json!({"artifact": "fix.diff"}), json!({"artifact": "fix.diff"})), "# fix.diff");
     }
 }

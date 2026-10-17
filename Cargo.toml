@@ -6,6 +6,10 @@ description = "Viper: an analysis engine for Difflicit that writes up the visual
 license = "MIT"
 publish = false
 
+# The library has a neutral name, so forks of Viper share its code unchanged (only the package's name differs).
+[lib]
+name = "engine"
+
 [dependencies]
 serde_json = "1"
 
