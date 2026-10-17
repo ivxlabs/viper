@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: MIT
 //! Reading the unified diff Difflicit sends (`git diff`, `git diff --no-index`) into files and hunks.
 
 #[derive(Debug, Default, PartialEq)]

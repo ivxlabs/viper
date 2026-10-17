@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: MIT
 //! Difflicit runs this with one JSON request on stdin; the analysis goes to stdout, problems to stderr.
 
 use std::io::Read;

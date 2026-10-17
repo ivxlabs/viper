@@ -10,7 +10,8 @@ general: anything HyperViper-only belongs there.
 - **Keep it simple, don't repeat yourself.** Small, direct code; one source of truth for each fact. The engine's
   name, id and version live in `engine.json` (the version also in `Cargo.toml`; a test checks they agree).
 - **Don't add dependencies** when a few lines will do.
-- **License headers.** Every source file starts with `SPDX-License-Identifier: GPL-3.0-only` in a comment.
+- **License headers.** Every source file starts with `SPDX-License-Identifier: MIT` in a comment. Viper is MIT on
+  purpose, so anyone can build an engine on it, proprietary ones included: don't add GPL code or dependencies.
 - **The output is for people.** Lead with what matters, and put the lines each point rests on in `diff` blocks.
 
 Before you finish: `cargo clippy --all-targets && cargo test`, and `scripts/package.sh` if you touched packaging.

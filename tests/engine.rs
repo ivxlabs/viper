@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: MIT
 //! The engine as Difflicit runs it: a request on stdin, diffmd on stdout, problems on stderr with a failing exit.
 
 use std::io::Write;

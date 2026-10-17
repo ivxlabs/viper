@@ -3,7 +3,7 @@ name = "viper"
 version = "0.1.0"
 edition = "2024"
 description = "Viper: an analysis engine for Difflicit that writes up the visual changes between two artifacts as diffmd."
-license = "GPL-3.0-only"
+license = "MIT"
 publish = false
 
 [dependencies]

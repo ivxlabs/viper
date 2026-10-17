@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: MIT
 //! Viper, an analysis engine for Difflicit: it writes up the visual changes between two artifacts — what changed,
 //! and where, file by file and function by function — as diffmd. Difflicit runs it with one JSON request on stdin
 //! and reads the analysis from stdout (protocol: https://ivx.run/docs/difflicit/engines/).

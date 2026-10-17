@@ -7,7 +7,9 @@ note:
 - for text and source: every changed file with its additions and deletions, then each file's changes as a patch;
 - for binaries: the functions that changed (least alike first), and those added and removed.
 
-Viper is free software under the GPL-3.0. **HyperViper** is the full version, built on Viper.
+Viper is open source under the MIT license, so it's also a starting point for your own engine: fork it, and
+release yours under any license you like, open source or proprietary. **HyperViper** is the full version, built
+on Viper.
 
 ## Install
 
@@ -37,4 +39,5 @@ cargo test                # unit tests, and the engine run the way Difflicit run
 
 ## License
 
-GPL-3.0-only. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). (Difflicit itself is GPL-3.0; engines are separate programs, so that doesn't
+reach them.)

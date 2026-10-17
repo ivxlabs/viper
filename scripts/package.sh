@@ -1,5 +1,5 @@
 #!/bin/sh
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 # Build the engine and lay it out as Difflicit installs it: dist/<id>/engine.json and dist/<id>/bin/<id>.
 # In Difflicit: Analyze → Manage engines… → Install engine…, and pick dist/<id>.
 set -eu
